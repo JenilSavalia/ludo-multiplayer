@@ -1,6 +1,7 @@
 import express from 'express'
 import { WebSocketServer } from 'ws'
 import http from "http"
+import { RED_PATH, YELLOW_PATH, GREEN_PATH, BLUE_PATH, PROTECTED_CELLS } from './deps.js'
 
 const app = express();
 const server = http.createServer(app)
@@ -11,7 +12,10 @@ class GAME_STATE {
     LAST_DICE_ACTION = {
         player_id: "",
         Value: 0,
+        // LAST_UPDATED_COLOR : "",
     }
+
+    ROll_ORDER = ["BLUE", "RED", "GREEN", "YELLOW"];
 
     user_map = {
         "id1": "BLUE_COORDINATES",
@@ -48,6 +52,43 @@ class GAME_STATE {
 
 }
 
+const PATHS = {
+    BLUE_PATH,
+    RED_PATH,
+    GREEN_PATH,
+    YELLOW_PATH
+}
+
+function checkCollison(color, target, myRoom) {
+    const coordKey = `${color}_COORDINATES`
+    const pathKey = `${color}_PATH`
+    const tmp = myRoom[coordKey]
+
+    console.log(PATHS[pathKey][tmp[target]])
+    const { r, c } = PATHS[pathKey][tmp[target]]
+
+    return PROTECTED_CELLS.some(cell => cell.r === r && cell.c === c);
+}
+
+
+
+function checkCollisonForEach(color, target, myRoom) {
+
+    
+    // const coordKey = `${color}_COORDINATES`
+    // const pathKey = `${color}_PATH`
+    // const tmp = myRoom[coordKey]
+    
+    // console.log(PATHS[pathKey][tmp[target]])
+    // const { r, c } = PATHS[pathKey][tmp[target]]
+    // Object.entries(myRoom.COORDIINATES).forEach(([key, value]) => );
+
+}
+
+
+
+
+
 
 wss.on("connection", async (ws, req) => {
     console.log("Client connected");
@@ -55,7 +96,8 @@ wss.on("connection", async (ws, req) => {
     // create a seperate room
     // create new game state instance
     const myRoom = new GAME_STATE();
-    console.log(myRoom)
+    // console.log(myRoom)
+    console.log(checkCollison("BLUE", "BLUE_A", myRoom))
     ws.on("message", (message) => {
         const data = JSON.parse(message);
         console.log("received:", data);
@@ -75,14 +117,18 @@ wss.on("connection", async (ws, req) => {
 
         // {
         //     "playerId" : "id1",
-        //      "message" : "move"
-        //      "target" : "BLUE_A"
+        //      "message" : "move",
+        //      "target" : "BLUE_A",
+        //      "color"  : "BLUE"
         // }
+
         if (data.message == "move") {
             const tmp = myRoom.user_map[data.playerId]
-            console.log(tmp)
-            console.log(myRoom[tmp])
             myRoom[tmp][data.target] += myRoom.LAST_DICE_ACTION.Value
+
+            //check collision 
+
+
             // broadcast to all
             ws.send(JSON.stringify({ message: "update coordniates", value: myRoom[tmp][data.target] }))
         }

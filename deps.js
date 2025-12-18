@@ -1,4 +1,25 @@
 
+
+export const PROTECTED_CELLS = [
+    // 🔴 Red
+    { r: 6, c: 1 },   // start
+    { r: 6, c: 2 },   // star
+
+    // 🟢 Green
+    { r: 1, c: 8 },   // start
+    { r: 2, c: 8 },   // star
+
+    // 🟡 Yellow
+    { r: 8, c: 13 },  // start
+    { r: 8, c: 12 },  // star
+
+    // 🔵 Blue
+    { r: 13, c: 6 },  // start
+    { r: 12, c: 6 }   // star
+];
+
+
+
 export const RED_PATH = [
     // Main path (52 steps)
     { r: 6, c: 0 }, { r: 6, c: 1 }, { r: 6, c: 2 }, { r: 6, c: 3 }, { r: 6, c: 4 }, { r: 6, c: 5 }, { r: 5, c: 6 },
@@ -12,7 +33,7 @@ export const RED_PATH = [
     { r: 7, c: 1 }, { r: 7, c: 2 }, { r: 7, c: 3 }, { r: 7, c: 4 }, { r: 7, c: 5 }, { r: 7, c: 6 }
 ];
 
-
+console.log(RED_PATH.length)
 
 export const YELLOW_PATH = [
     // Main path (52 steps)
