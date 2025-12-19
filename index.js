@@ -8,6 +8,7 @@ const server = http.createServer(app)
 const wss = new WebSocketServer({ server });
 
 const COLORS = ["BLUE", "RED", "GREEN", "YELLOW"]
+const COLORS_PATH = { "RED": RED_PATH, "BLUE": BLUE_PATH, "GREEN": GREEN_PATH, "YELLOW": YELLOW_PATH }
 
 class GAME_STATE {
 
@@ -134,10 +135,6 @@ const newGame = new GAME_STATE();
 function mapUser(color, userId) {
     newGame.mapUser(color, userId);
 }
-mapUser("RED", "id1");
-mapUser("YELLOW", "id2");
-mapUser("BLUE", "id3");
-mapUser("GREEN", "id4");
 
 function currentUserTurn() {
     const color = newGame.ROll_ORDER[newGame.currentTurnIndex]
@@ -149,7 +146,7 @@ function currentUserTurn() {
 
 function rollDice() {
     const random = Math.floor((Math.random() * 6) + 1);
-    currentUserTurn();
+    // currentUserTurn();
 
     // let count = 0;
     if (random === 6) {
@@ -165,19 +162,6 @@ function rollDice() {
     return random;
 }
 
-rollDice(newGame)
-rollDice(newGame)
-rollDice(newGame)
-rollDice(newGame)
-rollDice(newGame)
-rollDice(newGame)
-rollDice(newGame)
-rollDice(newGame)
-rollDice(newGame)
-rollDice(newGame)
-rollDice(newGame)
-rollDice(newGame)
-rollDice(newGame)
 
 // finds movable tokens for current color
 
@@ -201,11 +185,9 @@ function findMovableTokens() {
 
 
 
-console.log(findMovableTokens())
 
 
-function TokenSelection(selectedToken) {
-    const { ActiveTokens, BaseTokens } = findMovableTokens();
+function TokenSelection(selectedToken, ActiveTokens, BaseTokens) {
 
     // Validate chosen token belongs to player
     const currentColor = newGame.ROll_ORDER[newGame.currentTurnIndex];
@@ -214,10 +196,10 @@ function TokenSelection(selectedToken) {
     if (isValid) {
         if (ActiveTokens.includes(isValid)) {
             // Apply Movement
-            MoveToken(selectedToken, "active")
+            return { selectedToken, status: "active" }
         } else if (BaseTokens.includes(isValid)) {
             // Apply Movement
-            MoveToken(selectedToken, "base")
+            return { selectedToken, status: "base" }
         }
     }
 }
@@ -246,20 +228,67 @@ function MoveToken(tokenId, status) {
                     if (t.pathIndex == 58) {
                         t.status = "finished"
                     }
+                    return t.pathIndex;
                 }
             }
         })
 
     }
 
-    
 
 }
 
 
-function safeCheck(){
-    
+function safeCheck(pathIndex) {
+
+    // if pathIndex is protected index then skip\
+    // else return pathIndex
+    if (!PROTECTED_CELLS[ROll_ORDER[newGame.LAST_DICE_ACTION.LAST_UPDATED_INDEX]].includes(pathIndex)) {
+        return pathIndex;
+    }
+
 }
+
+
+function checkCapture(pathIndex) {
+    const color = newGame.ROll_ORDER[newGame.LAST_DICE_ACTION.LAST_UPDATED_INDEX];
+    console.log(color)
+    // console.log(COLORS_PATH[color])
+    const check = COLORS_PATH[color][pathIndex]
+    // check above {r : , c :} with all 3 other colors, if it gets matched, mate that to home
+
+    Object.entries(newGame.TOKENS).map(([key, value]) => {
+        // console.log(key, value)
+        if (key !== color) {
+            value.map(obj => {
+                const dynamic_check = obj.pathIndex;
+                console.log(dynamic_check)
+                console.log(COLORS_PATH[key][dynamic_check])
+                const { r, c } = COLORS_PATH[key][dynamic_check];
+
+                if (check.r == r && check.c == c) {
+                    newGame.TOKENS[color].pathIndex = 0;
+                    newGame.TOKENS[color].state = "base";
+                }
+                console.log(obj)
+
+            })
+        }
+    })
+}
+
+
+mapUser("RED", "id1");
+mapUser("YELLOW", "id2");
+mapUser("BLUE", "id3");
+mapUser("GREEN", "id4");
+
+
+rollDice(newGame)
+rollDice(newGame)
+
+console.log(findMovableTokens())
+
 
 
 

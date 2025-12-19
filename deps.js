@@ -1,22 +1,12 @@
 
 
-export const PROTECTED_CELLS = [
-    // 🔴 Red
-    { r: 6, c: 1 },   // start
-    { r: 6, c: 2 },   // star
+export const PROTECTED_CELLS = {
+    RED: [1, 2, 14, 15, 27, 28, 40, 41],
+    YELLOW: [3, 4, 16, 17, 29, 30, 42, 43],
+    GREEN: [1, 2, 14, 15, 27, 28, 40, 41],
+    BLUE: [2, 3, 15, 16, 28, 29, 41, 42]
+};
 
-    // 🟢 Green
-    { r: 1, c: 8 },   // start
-    { r: 2, c: 8 },   // star
-
-    // 🟡 Yellow
-    { r: 8, c: 13 },  // start
-    { r: 8, c: 12 },  // star
-
-    // 🔵 Blue
-    { r: 13, c: 6 },  // start
-    { r: 12, c: 6 }   // star
-];
 
 
 
