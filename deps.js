@@ -33,7 +33,6 @@ export const RED_PATH = [
     { r: 7, c: 1 }, { r: 7, c: 2 }, { r: 7, c: 3 }, { r: 7, c: 4 }, { r: 7, c: 5 }, { r: 7, c: 6 }
 ];
 
-console.log(RED_PATH.length)
 
 export const YELLOW_PATH = [
     // Main path (52 steps)
