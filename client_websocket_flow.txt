@@ -1,0 +1,62 @@
+
+STEP 1 - ROOM CREATION
+
+user creates room -> /create-multiplayer-room 
+receices a roomId
+
+other 3 users can join the game (4 player are reqired for game to start)
+
+
+STEP 2 - GAME STARTS
+
+note :
+game should be synced with game state;
+
+
+user sends command to roll dice
+{
+    "userToken" : "authtoken",
+    "action" : "ROLL_DICE"
+    "payload" : "BLUE"
+}
+
+before generating a random number , server must check if current turn is in sync with given color 
+
+client broadcasts generated number to all user (including user itself)
+
+{
+    "dice_value" : Random_generated_number
+}
+
+client broadcasts movabe list tokens to all users
+
+{
+    movableTokens : [token.....]
+}
+
+
+client  selects token from movable tokens and sends tokenId as payload
+
+{
+    "userToken" : "authtoken",
+    selectedToken : "TokenId"
+}
+
+server broadcasts the token moved by user to all other users
+
+
+server checks if moved token new position conflicts and kills other token or note
+
+and if kill happens , broadcasts it to all members
+
+{
+    killed_token = "TokenID"
+}
+
+
+
+
+
+
+
+

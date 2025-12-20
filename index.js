@@ -227,7 +227,7 @@ wss.on("connection", async (ws, req) => {
         return;
     }
 
-    if (room.roomSize > 5) {
+    if (room.roomSize >= 4) {
         ws.close(1008, "Room Full");
         return;
     }
