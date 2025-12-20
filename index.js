@@ -206,60 +206,66 @@ function play(selectedTokenId) {
 
 
 
+let roomId = 100;
+
+// RoomId: {
+// users: new Set(),
+// roomSize: 0
+// }
+const rooms = new Map();
 
 
+wss.on("connection", async (ws, req) => {
+    console.log("Client connected");
+    const params = new URLSearchParams(req.url.replace("/", ""));
+    const roomId = params.get("roomId");
+
+    const room = rooms.get(roomId)
+
+    if (!room) {
+        ws.close();
+        return;
+    }
+
+    if (room.roomSize >= 5) {
+        ws.close();
+        return;
+    }
+    room.users.add(ws);
+    room.roomSize++;
+
+    ws.on("message", (message) => {
+        const { message, roomId } = JSON.parse(message);
+        console.log("received:", data);
+        rooms.get(roomId).users.forEach(user => {
+            if (user != ws)
+                user.send(meaasge)
+        })
+    })
+
+    ws.on("close", () => {
+        // send message too other users in room , that this clienst has disconnected
+        room.users.delete(ws);
+        room.roomSize--;
+    })
+})
 
 
+app.post("/create-multiplayer-room", (req, res) => {
+    try {
+        roomId++;
+        rooms.set(roomId, {
+            users: new Set(),
+            roomSize: 0
+        })
+        return res.json({
+            roomId: roomId,
 
-
-
-
-
-
-// wss.on("connection", async (ws, req) => {
-//     console.log("Client connected");
-
-//     // create a seperate room
-//     // create new game state instance
-//     const myRoom = new GAME_STATE();
-//     // console.log(myRoom)
-//     console.log(checkCollison("BLUE", "BLUE_A", myRoom))
-//     ws.on("message", (message) => {
-//         const data = JSON.parse(message);
-//         console.log("received:", data);
-
-//         // {
-//         //      playerId : "djnsdjfnsdjf",
-//         //      "message" : "rollDice"
-//         // }
-
-//         if (data.message == "rollDice") {
-//             const diceRoll = Math.floor(Math.random() * 6) + 1;
-//             myRoom.LAST_DICE_ACTION = { player_id: data.playerId, Value: diceRoll }
-
-//             // broadcast to all
-//             ws.send(JSON.stringify({ playerId: data.playerId, message: "rollDice", value: diceRoll }));
-//         }
-
-//         // {
-//         //     "playerId" : "id1",
-//         //      "message" : "move",
-//         //      "target" : "BLUE_A",
-//         //      "color"  : "BLUE"
-//         // }
-
-//         if (data.message == "move") {
-//             const tmp = myRoom.user_map[data.playerId]
-//             myRoom[tmp][data.target] += myRoom.LAST_DICE_ACTION.Value
-
-//             //check collision 
-
-
-//             // broadcast to all
-//             ws.send(JSON.stringify({ message: "update coordniates", value: myRoom[tmp][data.target] }))
-//         }
-//     })
-// })
+        })
+    } catch (error) {
+        return res.status(500).send("Internal Server Error", e.message)
+    }
+})
 
 app.get("/health", (req, res) => {
     res.json("I am Healthy");
