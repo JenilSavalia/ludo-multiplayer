@@ -220,26 +220,25 @@ wss.on("connection", async (ws, req) => {
     const params = new URLSearchParams(req.url.replace("/", ""));
     const roomId = params.get("roomId");
 
-    const room = rooms.get(roomId)
+    const room = rooms.get(Number(roomId))
 
     if (!room) {
-        ws.close();
+        ws.close(1008, "Missing room");
         return;
     }
 
-    if (room.roomSize >= 5) {
-        ws.close();
+    if (room.roomSize > 5) {
+        ws.close(1008, "Room Full");
         return;
     }
     room.users.add(ws);
     room.roomSize++;
 
     ws.on("message", (message) => {
-        const { message, roomId } = JSON.parse(message);
-        console.log("received:", data);
-        rooms.get(roomId).users.forEach(user => {
+        const { msg } = JSON.parse(message);
+        rooms.get(Number(roomId)).users.forEach(user => {
             if (user != ws)
-                user.send(meaasge)
+                user.send(msg)
         })
     })
 
@@ -251,7 +250,7 @@ wss.on("connection", async (ws, req) => {
 })
 
 
-app.post("/create-multiplayer-room", (req, res) => {
+app.get("/create-multiplayer-room", (req, res) => {
     try {
         roomId++;
         rooms.set(roomId, {
