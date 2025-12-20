@@ -20,12 +20,17 @@ class GAME_STATE {
         }
     }
 
+    // normal phase transation
+    // DICE → TOKEN → RESOLVE → DICE
+
+    // If extra turn:
+    // DICE → TOKEN → RESOLVE → TOKEN
+
+
     CURRENT_PHASE = "DICE"
 
     LAST_DICE_ACTION = {
-        player_id: "",
         Value: 0,
-        LAST_UPDATED_INDEX: "",
     }
 
     currentTurnIndex = 0;
@@ -130,183 +135,155 @@ class GAME_STATE {
 }
 
 
+const newGame = new GAME_STATE();
 
 
 function mapUser(color, userId) {
     newGame.mapUser(color, userId);
 }
 
-function currentUserTurn() {
-    const color = newGame.ROll_ORDER[newGame.currentTurnIndex]
-    const userRollOrder = newGame.user_map.get(color)
-    console.log("Current Color Turn : ", color, " ", "user Id:", userRollOrder)
-    return userRollOrder;
-}
+// function currentUserTurn() {
+//     const color = newGame.ROll_ORDER[newGame.currentTurnIndex]
+//     const userRollOrder = newGame.user_map.get(color)
+//     console.log("Current Color Turn : ", color, " ", "user Id:", userRollOrder)
+//     return userRollOrder;
+// }
 
 function rollDice() {
     const random = Math.floor((Math.random() * 6) + 1);
-    // currentUserTurn();
-
-    // let count = 0;
-    if (random === 6) {
-        newGame.LAST_DICE_ACTION.Value = 6;
-        console.log(6)
-    } else {
-        newGame.LAST_DICE_ACTION.Value = random;
-        newGame.LAST_DICE_ACTION.LAST_UPDATED_INDEX = newGame.currentTurnIndex;
-        newGame.currentTurnIndex = (newGame.currentTurnIndex + 1) % 4;
-        console.log(random)
-    }
+    newGame.LAST_DICE_ACTION.Value = random;
 
     return random;
 }
 
 // finds movable tokens for current color
+// args : color , dice (random ganerated number)
+
+// what this function  does is , it returns movable tokens (i.e tokens with active status and tokens on base if dice value id 6)
 function findMovableTokens() {
-    const currentColor = newGame.ROll_ORDER[newGame.LAST_DICE_ACTION.LAST_UPDATED_INDEX]
+    const currentColor = newGame.ROll_ORDER[newGame.currentTurnIndex]
+    const random_num = newGame.LAST_DICE_ACTION.Value
 
-    const ActiveTokens = [];
-    const BaseTokens = [];
-
-    newGame.TOKENS[currentColor].map(t => {
-        if (t.state == "base") {
-            BaseTokens.push(t.tokenId)
-        } else if (t.state == "active") {
-            ActiveTokens.push(t.tokenId)
+    return newGame.TOKENS[currentColor].find(t => {
+        console.log(t)
+        if (t.state == "base" && random_num == 6) {
+            return true;
         }
+        if (t.state == "active") {
+            return true
+        }
+        return false;
     })
 
-    return { ActiveTokens, BaseTokens }
-
 }
 
-function TokenSelection(selectedToken, ActiveTokens, BaseTokens) {
 
-    // Validate chosen token belongs to player
+
+// returns token object
+function TokenSelection(selectedTokenID) {
+
     const currentColor = newGame.ROll_ORDER[newGame.currentTurnIndex];
-    const isValid = newGame.TOKENS[currentColor][selectedToken];
+    const isValid = newGame.TOKENS[currentColor].find(t => t.tokenId == selectedTokenID);
 
-    if (isValid) {
-        if (ActiveTokens.includes(isValid)) {
-            // Apply Movement
-            return { selectedToken, status: "active" }
-        } else if (BaseTokens.includes(isValid)) {
-            // Apply Movement
-            return { selectedToken, status: "base" }
+    // check if given tokenID is valid and movable 
+    if (isValid && movableTokenList.find(t => t.tokenId == selectedTokenID)) {
+        return isValid;
+    }
+    return false;
+}
+
+
+// args : token : object
+function MoveToken(token) {
+    const currentColor = newGame.ROll_ORDER[newGame.currentTurnIndex];
+    const random_num = newGame.LAST_DICE_ACTION.Value;
+
+
+    if (token.status === "base" && random_num === 6) {
+
+        newGame.TOKENS[currentColor].map(t => {
+            if (t.tokenId == token.tokenId) {
+                t.state = "active"
+                t.pathIndex = 0;
+                return;
+            }
+        })
+    }
+
+    const nextIndex = token.pathIndex + random_num;
+    if (nextIndex <= 58) {
+        token.pathIndex = nextIndex;
+        if (nextIndex == 58) {
+            token.state = "finished";
         }
     }
+
 }
 
-function MoveToken(tokenId, status) {
-    if (status === "base" && newGame.LAST_DICE_ACTION.Value === 6) {
-        // get last color rolled
-        const color = newGame.ROll_ORDER[newGame.LAST_DICE_ACTION.LAST_UPDATED_INDEX];
 
-        TOKENS[color].map(t => {
-            if (t.tokenId == tokenId) {
-                if (pathIndex <= 51) {
-                    t.pathIndex = 6;
-                    t.state = "active"
-                    return null;
-                }
-            }
-        })
-    } else if (status === "active") {
-        // get last color rolled
-        const color = newGame.ROll_ORDER[newGame.LAST_DICE_ACTION.LAST_UPDATED_INDEX];
+// args : token : object 
+function checkCapture(movedToken) {
 
-        TOKENS[color].map(t => {
-            if (t.tokenId == tokenId) {
-                if (pathIndex += newGame.LAST_DICE_ACTION.Value <= 58) {
-                    t.pathIndex += newGame.LAST_DICE_ACTION.Value;
-                    if (t.pathIndex == 58) {
-                        t.status = "finished"
-                    }
-                    return t.pathIndex;
-                }
-            }
-        })
+    const currentColor = newGame.ROll_ORDER[newGame.currentTurnIndex];
 
+    // checking if moved token has moved to protected box (i.e star,home,etc)
+    if (PROTECTED_CELLS[currentColor].includes(movedToken.pathIndex)) {
+        return;
     }
 
+    const check = COLORS_PATH[currentColor][movedToken.pathIndex]
+    // check above {r : , c :} with all 3 other colors, if it gets matched, send enemy its home
 
-}
 
-function safeCheck(pathIndex) {
-    if (pathIndex == null) return null;
-    // if pathIndex is protected index then skip\
-    // else return pathIndex
-    if (!PROTECTED_CELLS[ROll_ORDER[newGame.LAST_DICE_ACTION.LAST_UPDATED_INDEX]].includes(pathIndex)) {
-        return pathIndex;
-    }
-
-}
-
-function checkCapture(pathIndex) {
-    const color = newGame.ROll_ORDER[newGame.LAST_DICE_ACTION.LAST_UPDATED_INDEX];
-    console.log(color)
-    // console.log(COLORS_PATH[color])
-    const check = COLORS_PATH[color][pathIndex]
-    // check above {r : , c :} with all 3 other colors, if it gets matched, mate that to home
-
-    Object.entries(newGame.TOKENS).map(([key, value]) => {
-        // console.log(key, value)
-        if (key !== color) {
-            value.map(obj => {
-                const dynamic_check = obj.pathIndex;
-                // console.log(dynamic_check)
-                // console.log(COLORS_PATH[key][dynamic_check])
-                const { r, c } = COLORS_PATH[key][dynamic_check];
+    Object.entries(newGame.TOKENS).map(([enemyColor, tokens]) => {
+        if (enemyColor !== currentColor) {
+            tokens.map(obj => {
+                const { r, c } = COLORS_PATH[enemyColor][obj.pathIndex];
+                // console.log(COLORS_PATH[key][obj.pathIndex])
 
                 if (check.r == r && check.c == c) {
                     obj.pathIndex = 0;
                     obj.state = "base";
-
-                    // updating roll dice state so, if kill happens then dice will be rolled again for same user
-                    newGame.currentTurnIndex = newGame.LAST_DICE_ACTION.LAST_UPDATED_INDEX;
-                    return {
-                        killHappened: true,
-                        color: key,
-                        tokenId: obj.id
-                    }
+                    return true;
                 }
-                // console.log(obj)
 
             })
         }
-        return {
-            killHappened: false
-        }
+        return false
 
     })
 }
 
-
-mapUser("RED", "id1");
-mapUser("YELLOW", "id2");
-mapUser("BLUE", "id3");
-mapUser("GREEN", "id4");
-
-
-const newGame = new GAME_STATE();
-
-const diceValue = rollDice();
-
-const movableTokens = findMovableTokens()
-
-// user selects  token here .........
-
-const selectedToken = TokenSelection("Selected Token ID", movableTokens.ActiveTokens, movableTokens.BaseTokens)
-
-const moveTokens = MoveToken(selectedToken.selectedToken, selectedToken.status)
-
-const tokenCheck = safeCheck(moveTokens);
-
-const killHappened = checkCapture(tokenCheck)
-
-if (killHappened.killHappened === true) {
-    rollDice()
+function advancedTurn(extraTurn) {
+    if (!extraTurn) {
+        newGame.currentTurnIndex = (currentTurnIndex + 1) % 4;
+    }
 }
+
+
+// mapUser("RED", "id1");
+// mapUser("YELLOW", "id2");
+// mapUser("BLUE", "id3");
+// mapUser("GREEN", "id4");
+
+
+// const diceValue = rollDice();
+
+// const movableTokens = findMovableTokens()
+
+// // user selects  token here .........
+
+// const selectedToken = TokenSelection("Selected Token ID", movableTokens.ActiveTokens, movableTokens.BaseTokens)
+
+// const moveTokens = MoveToken(selectedToken.selectedToken, selectedToken.status)
+
+// const tokenCheck = safeCheck(moveTokens);
+
+// const killHappened = checkCapture(tokenCheck)
+
+// if (killHappened.killHappened === true) {
+//     rollDice()
+// }
 
 
 
